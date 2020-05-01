@@ -1,5 +1,6 @@
 package com.bil.katas.vavr.account;
 
+import io.vavr.control.Try;
 import lombok.AllArgsConstructor;
 
 import java.util.UUID;
@@ -12,34 +13,39 @@ public class AccountService {
     private final BusinessLogger businessLogger;
 
     public String register(UUID id) {
-        try {
-            User user = this.userService.findById(id);
-
-            if (user == null)
-                return null;
-
-            String accountId = this.twitterService.register(user.getEmail(), user.getName());
-
-            if (accountId == null)
-                return null;
-
-            String twitterToken = this.twitterService.authenticate(user.getEmail(), user.getPassword());
-
-            if (twitterToken == null)
-                return null;
-
-            String tweetUrl = this.twitterService.tweet(twitterToken, "Hello I am " + user.getName());
-
-            if (tweetUrl == null)
-                return null;
-
-            this.userService.updateTwitterAccountId(id, accountId);
-            businessLogger.logSuccessRegister(id);
-
-            return tweetUrl;
-        } catch (Exception ex) {
-            this.businessLogger.logFailureRegister(id, ex);
-            return null;
-        }
+        return createContext(id)
+                .flatMap(this::registerOnTwitter)
+                .flatMap(this::authenticateOnTwitter)
+                .flatMap(this::tweet)
+                .andThen(this::updateTwitterAccountId)
+                .andThen(() -> this.businessLogger.logSuccessRegister(id))
+                .onFailure(e -> this.businessLogger.logFailureRegister(id, e))
+                .map(RegistrationContext::getTweetUrl)
+                .getOrNull();
     }
+
+    private Try<RegistrationContext> createContext(UUID id) {
+        return getUser(id).map(RegistrationContext::new);
+    }
+
+    private Try<RegistrationContext> registerOnTwitter(RegistrationContext context) {
+        return Try.of(() -> this.twitterService.register(context.getEmail(), context.getName())).map(context::setAccountId);
+    }
+
+    private Try<RegistrationContext> authenticateOnTwitter(RegistrationContext context) {
+        return Try.of(() -> this.twitterService.authenticate(context.getEmail(), context.getPassword())).map(context::setTwitterToken);
+    }
+
+    private Try<RegistrationContext> tweet(RegistrationContext context) {
+        return Try.of(() -> this.twitterService.tweet(context.getTwitterToken(), "Hello I am " + context.getName())).map(context::setTweetUrl);
+    }
+
+    private void updateTwitterAccountId(RegistrationContext context) {
+        Try.run(() -> this.userService.updateTwitterAccountId(context.getId(), context.getAccountId()));
+    }
+
+    private Try<User> getUser(UUID id) {
+        return Try.of(() -> this.userService.findById(id));
+    }
+
 }

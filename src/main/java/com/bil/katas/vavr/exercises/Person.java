@@ -18,6 +18,10 @@ public class Person {
         this(firstName, lastName, Vector.empty());
     }
 
+    public String fullName() {
+        return getFirstName() + " " + getLastName();
+    }
+
     public boolean named(String name) {
         return name.equals(firstName + " " + lastName);
     }
