@@ -29,8 +29,8 @@ public class TryExercises extends PetDomainKata {
     @Test
     public void getTheResultOfDivide() {
         // Divide x = 9 by y = 2
-        Try<Integer> tryResult = null;
-        Integer result = 0;
+        Try<Integer> tryResult = Divide(9, 2);
+        Integer result = tryResult.get();
 
         Assert.assertEquals(4, result, 0);
         Assert.assertTrue(tryResult.isSuccess());
@@ -42,7 +42,9 @@ public class TryExercises extends PetDomainKata {
     public void mapTheResultOfDivide() {
         // Divide x = 9 by y = 2 and add z to the result
         Integer z = 3;
-        Integer result = 0;
+        Integer result = Divide(9, 2)
+                .map(i -> i + z)
+                .get();
 
         Assert.assertEquals(7, result, 0);
     }
@@ -50,13 +52,14 @@ public class TryExercises extends PetDomainKata {
     @Test(expected = ArithmeticException.class)
     public void divideByZeroIsAlwaysAGoodIdea() {
         // Divide x by 0 and get the result
+        Divide(10, 0).get();
     }
 
     @Test
     public void divideByZeroOrElse() {
         // Divide x by 0, on exception returns 0
         Integer x = 1;
-        Integer result = -1;
+        Integer result = Divide(x, 0).getOrElse(0);
 
         Assert.assertEquals(0, result, 0);
     }
@@ -66,7 +69,9 @@ public class TryExercises extends PetDomainKata {
         // Divide x by 0, log the failure message to the console and get 0
         Integer x = 1;
 
-        Integer result = -1;
+        Integer result = Divide(x, 0)
+                .onFailure(throwable -> System.out.println(throwable.getMessage()))
+                .getOrElse(0);
 
         Assert.assertEquals(0, result, 0);
     }
@@ -80,7 +85,10 @@ public class TryExercises extends PetDomainKata {
         Integer x = 8;
         Integer y = 4;
 
-        Integer result = 0;
+        Integer result = Divide(x, y)
+                .onFailure(throwable -> System.out.println(throwable.getMessage()))
+                .onSuccess(System.out::println)
+                .getOrElse(0);
 
         Assert.assertEquals(2, result, 0);
     }
@@ -95,7 +103,12 @@ public class TryExercises extends PetDomainKata {
         Integer x = 27;
         Integer y = 3;
 
-        Integer result = 0;
+        Integer result = Divide(x, y)
+                .flatMap(r -> Divide(r, y))
+                .flatMap(r -> Divide(r, y))
+                .onFailure(throwable -> System.out.println(throwable.getMessage()))
+                .onSuccess(System.out::println)
+                .getOrElse(0);
 
         Assert.assertEquals(1, result, 0);
     }
