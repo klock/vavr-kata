@@ -31,7 +31,9 @@ public class OptionExercises extends PetDomainKata {
                 Option.none());
 
 
-        Seq<Person> definedPersons = null;
+        Seq<Person> definedPersons = persons
+                .filter(Option::isDefined)
+                .map(Option::get);
 
         Assert.assertEquals(2, definedPersons.length());
     }
@@ -41,8 +43,10 @@ public class OptionExercises extends PetDomainKata {
         // Instantiate an Option of null (of type String)
         // map it to an Upper case function
         // then it must return the string "Ich bin empty" if empty
-        Option<String> iamAnOption = null;
-        String optionValue = null;
+        Option<String> iamAnOption = Option.of(null);
+        String optionValue = iamAnOption
+                .map(String::toUpperCase)
+                .getOrElse("Ich bin empty");
 
         Assert.assertTrue(iamAnOption.isEmpty());
         Assert.assertEquals("Ich bin empty", optionValue);
@@ -51,7 +55,10 @@ public class OptionExercises extends PetDomainKata {
     @Test
     public void findKaradoc() {
         // Find Karadoc in the people List or returns Perceval
-        String foundPersonLastName = null;
+        String foundPersonLastName = people
+                .map(Person::getLastName)
+                .find(lastName -> lastName.equals("Karadoc"))
+                .getOrElse(() -> "Perceval");
 
         Assert.assertEquals("Perceval", foundPersonLastName);
     }
@@ -62,7 +69,7 @@ public class OptionExercises extends PetDomainKata {
         String firstName = "Rick";
         String lastName = "Sanchez";
 
-        Person foundPerson = null;
+        Person foundPerson = getPersonNamed(firstName + " " + lastName);
     }
 
     @Test
@@ -72,7 +79,14 @@ public class OptionExercises extends PetDomainKata {
         Double start = 500d;
         StringBuilder resultBuilder = new StringBuilder();
 
-        Option<Double> result = null;
+        Option<Double> result = half(start)
+                .peek(resultBuilder::append)
+                .flatMap(this::half)
+                .peek(resultBuilder::append)
+                .flatMap(this::half)
+                .peek(resultBuilder::append)
+                .flatMap(this::half)
+                .peek(resultBuilder::append);
 
         Assert.assertEquals(result, Option.none());
         Assert.assertEquals("250.0125.0", resultBuilder.toString());
