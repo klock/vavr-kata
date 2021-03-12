@@ -38,13 +38,13 @@ public class RealLifeExample {
 
     @Test
     public void register_BudSpencer_should_return_a_new_tweet_url() {
-        String tweetUrl = accountService.register(BUD_SPENCER);
+        String tweetUrl = accountService.register(BUD_SPENCER).getOrElse("Registration failed");
         Assert.assertEquals("TweetUrl", tweetUrl);
     }
 
     @Test
     public void register_an_unknown_user_should_return_an_error_message() {
-        String tweetUrl = accountService.register(UNKNOWN_USER);
-        Assert.assertEquals(null, tweetUrl);
+        String tweetUrl = accountService.register(UNKNOWN_USER).getOrElse("Registration failed");
+        Assert.assertEquals("Registration failed", tweetUrl);
     }
 }
